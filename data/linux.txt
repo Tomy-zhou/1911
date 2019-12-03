@@ -1,0 +1,12 @@
+liunx 使用秘钥登录
+ssh-keygen -t rsa -1024
+cd .ssh/
+mv id_rsa.pub   authorized_keys
+vi /etc/ssh/sshd_config
+修改配置为允许公钥登录
+PubkeyAuthentication yes
+AuthorizedKeysFile      .ssh/authorized_keys
+PasswordAuthentication no（不需要账号密码时使用）
+
+重启sshd服务以生效：
+service sshd restart

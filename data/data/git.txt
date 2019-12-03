@@ -1,0 +1,67 @@
+提交文件：
+git add file
+git commit -m “提交的备注”
+查看提交日志：
+git log 
+查看状态：
+git status
+撤销：
+git checkout -- file
+删除：
+rm file  可恢复
+git rm   从版本库删除
+回滚：
+git reset --hard HEAD^
+git reset --hard 版本号
+创建分支
+git checkout -b dev
+查看分支：
+git branch
+合并：
+git merge
+关联远程库
+git remote add origin git@gitee.com:xiaopinzi0501/learngit.git
+git push -u origin master
+克隆本地库
+git clone git@gitee.com:xiaopinzi0501/learngit.git
+
+https://gitee.com/xiaopinzi0501
+
+
+
+常用命令
+git init
+git add //添加到git(暂存区)准备提交
+git add -A
+git add -all //把工作区所有修改添加到暂存区
+git commit -m “描述内容” //默认提交到主分支
+git pull //从远程抓取分支
+远程仓库
+git remote //查看远程库信息
+git remote -v //查看更详细的远程库信息
+git remote add origin
+//关联一个远程仓库
+git push -u origin master //第一次提交带上-u 用于把本地以前的commit推送到关联的仓库
+git push origin master
+git remote rm origin //移除关联
+git clone //克隆仓库
+分支管理
+git branch //查看分支
+git branch //创建分支
+git branch -D //强行删除
+git checkout //切换分支
+git checkout -b //创建+切换分支
+git checkout -b origin/ //在本地创建和远程分支对应的分支
+git branch --set-upstream origin/
+git merge //合并分支到当前分支
+git branch -d //删除分支
+git log --graph //查看分支合并图
+git stash //暂存工作区
+git stash apply //恢复工作区(不删除暂存)
+git stash drop //删除工作区暂存
+git stash pop //恢复工作区(删除暂存)
+git stash list //查看工作区暂存
+
+
+
+

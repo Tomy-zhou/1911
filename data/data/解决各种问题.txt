@@ -1,0 +1,439 @@
+处理MYSQL死锁问题：
+SELECT * FROM information_schema.INNODB_TRX ;
+kill 18843;
+
+mysql 忽略大小写
+vi /etc/my.cnf 
+lower_case_table_names=1
+
+设置数据库最大连接数：
+ vi /etc/my.cnf
+show variables like 'max_connections';
+set global max_connections=2000
+
+
+查看所有用户：SELECT DISTINCT CONCAT('User: ''',user,'''@''',host,''';') AS query FROM mysql.user；
+查看用户权限：show grants for 'marvels_core'@'10.0.17.%';
+
+
+虚拟主机账号：administrator@vsphere.local  Fjjf@75604638
+
+
+安装：
+
+查找以前是否安装：rpm -qa|grep -i 组件
+删除命令：rpm -e --nodeps 包名
+ 
+
+Linux主机开放端口：vi /etc/sysconfig/iptables
+-A INPUT -p tcp -m tcp --dport 8889 -j ACCEPT
+ /etc/init.d/iptables restart /apps/marvels-core-product
+/etc/rc.d/init.d/iptables save
+
+Linux主机装jdk：安装之前先检查一下系统有没有自带open-jdk
+命令：marvels-core-product
+rpm -qa |grep java
+rpm -qa |grep jdk
+rpm -qa |grep gcj
+如果没有输入信息表示没有安装。
+如果安装可以使用rpm -qa | grep java | xargs rpm -e --nodeps 批量卸载所有带有Java的文件  这句命令的关键字是java
+首先检索包含java的列表
+yum list java*
+
+检索1.8的列表
+yum list java-1.8*   
+安装1.8.0的所有文件
+yum install java-1.8.0-openjdk* -y
+使用命令检查是否安装成功
+java -version
+到此安装结束了。这样安装有一个好处就是不需要对path进行设置，自动就设置好了
+
+
+查看一段日志：tail -n 1000：显示最后1000行
+tail -n +1000：从1000行开始显示，显示1000行以后的
+head -n 1000：显示前面1000行
+
+
+jenkins 安装
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+yum install jenkins
+service jenkins start  
+查看管理员密码：vi /var/lib/jenkins/secrets/initialAdminPassword
+修改配置文件/etc/sysconfig/jenkins
+JENKINS_JAVA_OPTIONS="-Djava.awt.headless=true -XX:PermSize=512m -XX:MaxPermSize=1024m -Xms512m -Xmx1024m
+卸载jenkins
+
+service jenkins stop
+yum clean all
+
+yum -y remove jenkins
+配置maven环境变量
+vim /etc/profile
+MAVEN_HOME=/usr/local/apache-maven
+PATH=$PATH:$MAVEN_HOME/bin
+修改后，执行source /etc/profiile 使修改生效
+
+
+添加svn 账号：/home/svnpasswd
+
+
+./redis-server /etc/redis/redis.conf
+启动redis指定启动配置
+/etc/init.d/iptables 
+
+设置开机自启
+1.配置服务到/etc/init.d
+2.chkconfig --add   服务名
+3.chkconfig  服务名  on 为开启 off 为关闭
+
+提示：服务不支持 chkconfig
+
+# chkconfig: 2345 89 11
+# description: jenkins service
+
+
+查看多核CPU命令
+mpstat -P ALL  和  sar -P ALL > aaa.txt   重定向输出内容到文件 aaa.txt  
+监控java线程数：
+ps -eLf | grep java | wc -l
+ 
+监控网络客户连接数：
+netstat -n | grep tcp | grep 侦听端口 | wc -l
+
+1)统计80端口连接数
+netstat -nat|grep -i "80"|wc -l
+
+2）统计httpd协议连接数
+ps -ef|grep httpd|wc -l
+
+3）、统计已连接上的，状态为“established
+netstat -na|grep ESTABLISHED|wc -l
+ 
+查看tcp 连接数
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'  或 ss -s
+
+
+
+ln -s 软链接！
+
+nfs挂载：
+   安装：yum install nfs-utils
+   挂载 mount -t nfs nfsIP：/文件路径
+
+一、安装NFS
+# sudo apt-get install nfs-kernel-server
+
+同时会有两个软件包nfs-common和portmap被安装上
+
+二.在/建立共享项目nfst 
+# mkdir nfs_shared 
+# chmod 777 -R nfs_shared/
+
+保证使用者都能够读、写、执行
+
+
+
+三.修改NFS配置文件
+lingd@ubuntu:~$ vi /etc/exports
+内容为：
+     /home/nfst_shared     192.168.0.*(rw,sync,no_root_squash,no_subtree_check)
+
+   其中：
+     /home/nfst_shared  ---要共享的目录
+     192.168.0.*---允许访问的网段，也可以是ip地址、主机名（能够被服务器解析）、
+               *（所有人都能访问）
+     (rw,sync,no_root_squash,no_subtree_check)---
+rw:读/写权限
+                sync:数据同步写入内存和硬盘
+                no_root_squash:服务器允许远程系统以root特权存取该目录
+no_subtree_check:关闭子树检查
+
+其他选项可以通过man exports查阅man文档
+
+
+
+四、启动服务
+重启portmapper（端口映射）服务
+lingd@Ubuntu:~$ sudo service portmap restart
+portmap start/running, process 550
+重启NFS服务
+lingd@ubuntu:~$ sudo service nfs-kernel-server restart
+ * Stopping NFS kernel daemon                                            [ OK ] 
+ * Unexporting directories for NFS kernel daemon...                      [ OK ] 
+ * Exporting directories for NFS kernel daemon...                        [ OK ] 
+ * Starting NFS kernel daemon                                            [ OK ]
+
+五、测试
+1、测试Ubuntu nfs
+　　此时可以运行以下命令来显示一下共享出来的目录：
+　　$showmount -e
+
+mkdir -p 创建 /a/b/..  结构目录
+
+远程传输：scp -P 端口号 -r root@远程ip:/目录文件  /目标路径  
+
+vi命令详解：
+Ctrl+u：向文件首翻半屏；
+Ctrl+d：向文件尾翻半屏；
+Ctrl+f：向文件尾翻一屏；
+Ctrl+b：向文件首翻一屏；
+Esc：从编辑模式切换到命令模式；
+ZZ：命令模式下保存当前文件所做的修改后退出vi；
+:行号：光标跳转到指定行的行首；
+:$：光标跳转到最后一行的行首；
+x或X：删除一个字符，x删除光标后的，而X删除光标前的；
+D：删除从当前光标到光标所在行尾的全部字符；
+dd：删除光标行正行内容；
+ndd：删除当前行及其后n-1行；
+nyy：将当前行及其下n行的内容保存到寄存器？中，其中？为一个字母，n为一个数字；
+p：粘贴文本操作，用于将缓存区的内容粘贴到当前光标所在位置的下方；
+P：粘贴文本操作，用于将缓存区的内容粘贴到当前光标所在位置的上方；
+/字符串：文本查找操作，用于从当前光标所在位置开始向文件尾部查找指定字符串的内容，查找的字符串会被加亮显示；
+？name：文本查找操作，用于从当前光标所在位置开始向文件头部查找指定字符串的内容，查找的字符串会被加亮显示；
+a，bs/F/T：替换文本操作，用于在第a行到第b行之间，将F字符串换成T字符串。其中，“s/”表示进行替换操作；
+a：在当前字符后添加文本；
+A：在行末添加文本；
+i：在当前字符前插入文本；
+I：在行首插入文本；
+o：在当前行后面插入一空行；
+O：在当前行前面插入一空行；
+:wq：在命令模式下，执行存盘退出操作；
+:w：在命令模式下，执行存盘操作；
+:w！：在命令模式下，执行强制存盘操作；
+:q：在命令模式下，执行退出vi操作；
+:q！：在命令模式下，执行强制退出vi操作；
+:e文件名：在命令模式下，打开并编辑指定名称的文件；
+:n：在命令模式下，如果同时打开多个文件，则继续编辑下一个文件；
+:f：在命令模式下，用于显示当前的文件名、光标所在行的行号以及显示比例；
+:set number：在命令模式下，用于在最左端显示行号；
+:set nonumber：在命令模式下，用于在最左端不显示行号；
+
+
+ssh 禁止root直接登录
+#vi /etc/ssh/sshd_config
+
+查找“#PermitRootLogin yes”，将前面的“#”去掉，短尾“yes”改为“no”（不同版本可能区分大小写），并保存文件。
+
+4,修改完毕后，重启sshd服务
+
+#service sshd restart
+
+5,下次登录，先使用xxx登录，然后通过su root 来获取root权限。
+
+修改sshd默认端口
+
+虽然更改端口无法在根本上抵御端口扫描，但是，可以在一定程度上提高防御。
+
+1.打开sshd配置文件
+
+#vi /etc/ssh/sshd_config
+
+2.找到#Port 22字段删掉#，将22改为其他不被使用的端口
+
+服务器端口最大可以开到65536
+
+3.重启sshd服务
+
+#service sshd restart
+
+安装scp ： 
+
+yum install scp命令安装，结果提示：
+
+No package scp available.
+
+装：
+yum install openssh-clients
+
+scp 1.so root@192.168.0.182:/root/
+
+输入密码后又再次提示：
+
+bash: scp: command not found
+
+在目标主机也同样安装一下openssh-clients，再次尝试，问题解决
+
+
+tomcat配置服务(jsvc)启动：
+1.进入bin目录解压：tar zxvf commons-daemon-native.tar.gz
+2.cd commons-daemon-1.1.0-native-src/unix    执行./configure  make
+3.cp jsvc  到bin 目录
+4.vi /tomcat/bin/daemon.sh   加入JAVA_HOME=/usr/local/jdk1.7.0_80  CATALINAHOME=/usr/local/tomcat7-marvel-core-service
+5.软链接  ln -s /tomcat/bin/daemon.sh   /etc/init.d/tomcat
+6.新建Tomcat用户 useradd -M -d /usr/local/tomcat7-marvel-core-service/ -s /sbin/nologin tomcat
+    chown -R tomcat: /usr/local/tomcat7-marvel-core-service/
+7.启动服务service tomcat start
+
+make编译报错make: *** No targets specified and no makefile found. Stop.
+wget http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.6.tar.gz
+tar zxvf ncurses-5.6.tar.gz
+cd ncurses-5.6
+ ./configure -prefix=/usr/local -with-shared -without-debug
+make
+make install
+
+
+Linux下使用Nexus搭建Maven私服
+ 下载
+ # wget https://sonatype-download.global.ssl.fastly.net/nexus/oss/nexus-2.11.2-03-bundle.tar.gz
+ 解压
+ # cd /usr/local
+ # mkdir nexus
+ # tar -xzvf nexus-2.11.2-03-bundle.tar.gz -C nexus
+ # cd nexus
+ # ls
+  nexus-2.11.2-03   sonatype-work
+ 修改配置文件
+ # cd nexus-2.11.2-03/conf
+ # vi nexus.properties
+ #Jetty section
+ application-port=8081      ##修改Jetty端口号
+ # nexus section
+ nexus-work=${bundleBasedir}/../sonatype-work/nexus　　
+
+ 配置用户
+
+# vi /usr/local/nexus/nexus-2.11.2-03/bin/nexus
+
+
+RUN_AS_USER=root
+
+保存以上修改
+
+若有设置防火墙，需前往修改防火墙配置并重启防火墙，此处略过......
+
+启动nexus
+
+# /usr/local/nexus/nexus-2.11.2-03/bin/nexus start
+
+在浏览器打开:http://ip:8081/nexus,登录：用户名admin  默认密码：admin123
+
+
+dubbo监控平台搭建
+
+1、从官网下载源码
+
+# git clone https://github.com/alibaba/dubbo.git
+
+2、配置dubbo.properties：
+
+$ vim  dubbo/dubbo-admin/src/main/webapp/WEB-INF/dubbo.properties
+
+dubbo.registry.address=zookeeper://192.168.10.101:2181   注：这里说明下zookeeper地址，这个指的是已经部署好的注册中心zookeeper的IP地址，端口号不变
+
+dubbo.admin.root.password=root 
+
+dubbo.admin.guest.password=root
+
+3、进行构建并打成war包
+
+# cd dubbo/dubbo-admin
+
+# mvn package -Dmaven.skip.test=true
+
+4、把构建好的war包放到tomcat下运行，war包在dubbo/dubbo-admin/target/下
+
+5、用浏览器打开地址 http://localhost:8080/dubbo-admin，账号密码都是 root，则就可以进入到 dubbo管理控制台
+
+
+
+
+RabbitMQ 安装
+1.yum install erlang
+2.wget http://www.rabbitmq.com/releases/rabbitmq-server/v3.6.2/rabbitmq-server-3.6.2-1.noarch.rpm
+3.yum install rabbitmq-server-3.6.2-1.noarch.rpm
+4./etc/init.d/rabbitmq-server start
+5. chkconfig rabbitmq-server on
+6.rabbitmq-plugins enable rabbitmq_management   #启动后台管理    /etc/init.d/rabbitmq-server restart
+8.开放端口 
+iptables -I INPUT -p tcp --dport 15672 -j ACCEPT
+9.添加用户设置权限
+rabbitmqctl add_user admin admin      添加权限:rabbitmqctl set_permissions -p "/" admin ".*" ".*" ".*" 
+修改用户角色:rabbitmqctl set_user_tags admin administrator
+
+yum install erlang
+报错：No package erlang available
+PS：同样的，如果我们在安装nginx的时候出现"No package nginx available"提示也是通过这个方法解决，安装EPEL库就可以解决。
+wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm//下载
+rpm -ivh epel-release-6-8.noarch.rpm//安装
+然后再执行，便没有问题了：
+
+/sbin/iptables -I INPUT -p tcp --dport 5672 -j ACCEPT         
+
+/etc/rc.d/init.d/iptables save      
+
+/etc/init.d/iptables restart       
+
+/etc/init.d/iptables status
+集群搭建：
+1.修改hosts
+ip1 主机名1
+ip2 主机名2
+ip3 主机名3
+2.cp  /var/lib/rabbitmq/.erlang.cookie  到其它主机
+3.重启
+# ps -ef | grep ^rabbitmq | awk '{print $2}' | xargs kill -9
+# service rabbitmq-server start
+4.在两位两台执行
+# rabbitmqctl stop_app
+# rabbitmqctl join_cluster rabbit@主机名1
+# rabbitmqctl start_app
+5.设置镜像策略
+# rabbitmqctl set_policy ha-all "^" '{"ha-mode":"all","ha-sync-mode":"automatic"}'
+
+10.卸载方法
+#rpm -qa|grep rabbitmq
+rabbitmq-server-3.6.1-1.noarch
+#rpm -e --nodeps rabbitmq-server-3.6.1-1.noarch
+#rpm -qa|grep erlang
+esl-erlang-18.3-1.x86_64
+#rpm -e --nodeps esl-erlang-18.3-1.x86_64ls
+
+
+输出日志的时间与系统时间不一致：
+-Duser.timezone=GMT+08
+-Duser.timezone=Asia/Shanghai
+unlink /etc/localtime 
+ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+
+yum No more mirrors to try 解决方法
+yum clean 
+vi /etc/resolv.conf
+
+在此文件最后加入：nameserver 8.8.8.8
+locale
+ LANG="zh_CN.UTF-8"
+
+
+修改用户uid，gid
+1.查看用户id：  id user
+2.查看要修改的id占用： cat /etc/passwd | grep id
+3.杀掉user进程： kill `lsof -u user`
+4.修改id：  usermod -u id user && groupmod -g id user
+
+
+
+
+rabbitmq  一键安装
+1.yum install erlang		//安装erlang依赖
+2.yum install rabbitmq_server  //安装rabbitmq服务
+3.service rabbitmq_server start //启动服务
+4../rabbitmq-plugins enable rabbitmq_management  //启动后台管理
+5.rabbitmqctl add_user user_admin passwd_admin //新建用户
+6.rabbitmqctl set_user_tags user_admin administrator //s设置管理员权限
+7.rabbitmqctl  change_password user_admin admin //修改密码
+8../rabbitmq-plugins enable rabbitmq_tracing  //启动日志组件
+
+
+ lsof |grep deleted
+
+
+
+update mysql.user set authentication_string=PASSWORD('ykdDDup@2019') where User='root';
+flush privileges; 
+
+
+
+ykdCoreDongDong

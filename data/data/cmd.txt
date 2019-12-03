@@ -1,0 +1,10 @@
+1.services.msc---本地服务设置
+2.cleanmgr-------垃圾整理
+3.compmgmt.msc---计算机管理
+4. regedit.exe----注册表
+5.mstsc----------远程桌面连接
+6.mmc------------打开控制台
+7.fsmgmt.msc-----共享文件夹管理器
+8.shrpubw--------创建共享文件夹
+9.services.msc---本地服务设置
+10.taskmgr--------任务管理器

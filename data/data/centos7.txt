@@ -1,0 +1,43 @@
+防火墙命令
+1.查看防火墙服务状态：systemctl status firewalld
+2.查看防火墙是否开启： firewall-cmd --state
+3. 防火墙配置规则： firewall-cmd --list-all
+
+#查看linux哪些程序正在使用互联网
+
+
+firewall-cmd --permanent --list-services ssh dhcpv6-client
+
+
+# 开启
+service firewalld start
+
+# 重启
+service firewalld restart
+
+# 关闭
+service firewalld stop
+
+
+
+# 查询端口是否开放
+
+firewall-cmd --query-port=8080/tcp
+
+# 开放80端口
+
+firewall-cmd --permanent --add-port=80/tcp
+
+firewall-cmd --permanent --add-port=8080-8085/tcp
+
+# 移除端口
+firewall-cmd --permanent --remove-port=8080/tcp
+
+查看防火墙的开放的端口
+
+firewall-cmd --permanent?--list-ports
+
+
+#重启防火墙(修改配置后要重启防火墙)
+firewall-cmd --reload
+

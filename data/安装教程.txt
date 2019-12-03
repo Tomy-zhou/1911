@@ -1,0 +1,168 @@
+一、nginx 安装
+1. 下载安装Nginx安装包： wget http://nginx.org/download/nginx-1.16.1.tar.gz /home/yunke（下载稳定版本）。
+2. 进入 /home/yunke/nginx-1.16.1/   执行 ./configure && make && make install
+3. 进入 /usr/local/nginx/sbin/      执行 ./nginx
+4. 查看进程 ps -ef | grep nginx
+
+
+二、nfs安装
+1.安装 NFS 服务器所需的软件包： yum install -y nfs-utils
+2.mkdir -p /usr/local/nfs_shared
+3. vi /etc/exports  添加 ： /usr/local/nfs_shared    192.168.3.*(rw,sync,no_root_squash,no_subtree_check)
+4.rpcbind和nfs做开机启动 :
+systemctl enable rpcbind.service
+systemctl enable nfs-server.service
+5.启动rpcbind和nfs服务：
+systemctl start rpcbind.service
+systemctl start nfs-server.service
+6.确认NFS服务器启动成功： rpcinfo -p
+7.使配置生效: exportfs -r
+8.查看挂载：exportfs
+9.客户端：
+yum install -y nfs-utils
+systemctl enable rpcbind.service
+systemctl start rpcbind.service
+mount -t nfs ip:/目录
+df -h 查看是否挂载成功
+
+
+三、zookeeper集群搭建
+1. cd /usr/local/src 下载最新版安装包： wget https://mirrors.tuna.tsinghua.edu.cn/apache/zookeeper/zookeeper-3.5.6/apache-zookeeper-3.5.6-bin.tar.gz
+2.解压：tar -zxvf apache-zookeeper-3.5.6-bin.tar.gz   mv apache-zookeeper-3.5.6-bin  zookeeper/
+3.创建存储数据目录和日志目录：mkdir -p /usr/local/src/data/zookeeper/{data,logs}
+4. 修改配置 cd /usr/local/src/zookeeper/conf    cp zoo_sample.cfg  zoo.cfg    vi zoo.cfg
+dataDir=/usr/local/src/data/zookeeper/data
+dataLogDir=/usr/local/src/data/zookeeper/logs
+server.1=192.168.3.163:2888:3888
+server.2=192.168.3.164:2888:3888
+server.3=192.168.3.165:2888:3888
+5.echo '1' >data/zookeeper/data/myid (三台服务器分别创建myid文件，写入1,2,3)
+6.启动 cd /usr/local/src/zookeeper/bin  在三台服务分别执行 ./zkServer.sh  start 
+7.检查集群是否配置成功 
+连接一台zookeeper  bin目录下执行 ./zkCli.sh -server 192.168.3.163:2181
+写入数据 create /test data
+再连接另外一台的zookeeper   ./zkCli.sh -server 192.168.3.164:2181
+获取写入的数据  get /test   能获取到之前写入的数据，集群便搭建成功咯！
+
+四、redis 安装
+1.下载最新的安装包： wget http://download.redis.io/releases/redis-5.0.5.tar.gz
+2. 解压编译安装：
+tar -zxvf redis-5.0.5.tar.gz  
+cd  redis-5.0.5 
+make && make install PREFIX=/usr/local/redis (PREFIX 配置安装目录)
+使用配置启动:  
+cp  /usr/local/src/redis-5.0.5/redis.conf   /etc/redis/redis.conf
+vi /etc/redis/redis.conf  注释掉 bind 127.0.0.1  将daemonize no -> daemonize yes
+启动 cd /usr/local/redis/bin   执行  ./redis-server  /etc/redis/redis.conf 
+测试 ： ./redis-cli -h 192.168.3.163 -p 6379
+
+五、mysql 安装
+1.下载安装包：
+wget https://dev.mysql.com/get/Downloads/MySQL-5.7/mysql-5.7.28-linux-glibc2.12-x86_64.tar.gz
+2.解压重命名
+tar -zxvf mysql-5.7.28-linux-glibc2.12-x86_64.tar.gz
+mv mysql-5.7.28-linux-glibc2.12-x86_64   mysql
+3.创建数据仓库目录
+mkdir -p data/mysql
+4.创建mysql 用户及用户组，修改mysql目录属有者
+groupadd mysql
+useradd -r -s /sbin/nologin -g mysql mysql -d /usr/local/src/mysql
+chown -R mysql:mysql  /usr/local/src/mysql
+chown -R mysql:mysql  /usr/local/src/data/mysql
+5.配置参数-获取临时密码
+cd mysql  
+bin/mysqld --initialize --user=mysql --basedir=/usr/local/src/mysql --datadir=/usr/local/src/data/mysql
+bin/mysql_ssl_rsa_setup  --datadir=/usr/local/src/data/mysql/
+执行报错 ：error while loading shared libraries: libaio.so.1: cannot open shared object file: No such file or directory
+请安装libaio：um install libaio 
+6.配置服务启动
+cp support-files/mysql.server /etc/init.d/mysql
+7.修改配置文件（目录按具体安装目录修改）
+vi /etc/my.cnf
+[mysqld]
+datadir=/usr/local/src/data/mysql
+basedir=/usr/local/src/mysql
+socket=/usr/local/src/mysql/mysql.sock
+character_set_server=utf8
+init_connect='SET NAMES utf8'
+symbolic-links=0
+[mysqld_safe]
+log-error=/var/log/mysql/mysql.log
+pid-file=/var/run/mysql/mysql.pid
+[client]
+default-character-set=utf8
+socket=/usr/local/src/mysql/mysql.sock
+[mysql]
+default-character-set=utf8
+socket=/usr/local/src/mysql/mysql.sock
+8.启动mysql
+service mysql restart
+9.连接测试
+ln -s /usr/local/src/mysql/bin/mysql /usr/bin/  （mysql 命令不存在时执行）
+mysql -uroot -p （密码为之前生成的临时密码）
+10.修改密码设置权限
+set password=password('root');
+grant all privileges on *.* to 'root'@'%' identified by 'root';
+flush privileges;
+flush privileges;
+
+六、RabbitMQ 安装
+1.yum install erlang
+2.wget http://www.rabbitmq.com/releases/rabbitmq-server/v3.6.2/rabbitmq-server-3.6.2-1.noarch.rpm
+3.yum install rabbitmq-server-3.6.2-1.noarch.rpm
+4./etc/init.d/rabbitmq-server start
+5. chkconfig rabbitmq-server on
+6.rabbitmq-plugins enable rabbitmq_management   #启动后台管理    /etc/init.d/rabbitmq-server restart
+8.开放端口 
+iptables -I INPUT -p tcp --dport 15672 -j ACCEPT
+9.添加用户设置权限
+rabbitmqctl add_user admin admin      添加权限:rabbitmqctl set_permissions -p "/" admin ".*" ".*" ".*" 
+修改用户角色:rabbitmqctl set_user_tags admin administrator
+
+yum install erlang
+报错：No package erlang available
+PS：同样的，如果我们在安装nginx的时候出现"No package nginx available"提示也是通过这个方法解决，安装EPEL库就可以解决。
+wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm//下载
+rpm -ivh epel-release-6-8.noarch.rpm//安装
+然后再执行，便没有问题了：
+
+/sbin/iptables -I INPUT -p tcp --dport 5672 -j ACCEPT         
+
+/etc/rc.d/init.d/iptables save      
+
+/etc/init.d/iptables restart       
+
+/etc/init.d/iptables status
+集群搭建：
+1.修改hosts
+ip1 主机名1
+ip2 主机名2
+ip3 主机名3
+2.cp  /var/lib/rabbitmq/.erlang.cookie  到其它主机
+3.重启
+# ps -ef | grep ^rabbitmq | awk '{print $2}' | xargs kill -9
+# service rabbitmq-server start
+4.在另外两台执行
+# rabbitmqctl stop_app
+# rabbitmqctl join_cluster rabbit@主机名1
+# rabbitmqctl start_app
+5.设置镜像策略
+# rabbitmqctl set_policy ha-all "^" '{"ha-mode":"all","ha-sync-mode":"automatic"}'
+
+七、nacos安装
+1.下载安装包： wget https://github.com/alibaba/nacos/releases/download/1.1.4/nacos-server-1.1.4.tar.gz
+2.解压 ： tar -zxvf nacos-server-1.1.4.tar.gz
+3.修改配置文件： vi conf/application.properties 加入数据库连接
+spring.datasource.platform=mysql
+db.num=1
+db.url.0=jdbc:mysql://192.168.3.168:3306/mcsmdb?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&allowMultiQueries=true
+db.user=root
+db.password=yunke123
+4.复制sql文件到连接的库中执行：vi conf/nacos-mysql.sql
+5.启动： cd  bin/
+sh startup.sh -m standalone (单机模式：注意后台启动在后面加 & 哦！)
+6.集群搭建：
+修改配置文件： mv conf/cluster.conf.example  conf/cluster.conf
+vi conf/cluster.conf  里面的ip换成安装nacos的机器ip（至少需要三台才能形成集群哦！）
+然后在每一台执行启动：sh startup.sh
+

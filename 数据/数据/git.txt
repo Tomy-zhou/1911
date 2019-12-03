@@ -25,10 +25,6 @@ git push -u origin master
 克隆本地库
 git clone git@gitee.com:xiaopinzi0501/learngit.git
 
-https://gitee.com/xiaopinzi0501
-
-
-
 常用命令
 git init
 git add //添加到git(暂存区)准备提交
